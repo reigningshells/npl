@@ -1,0 +1,2 @@
+# npl
+No PowerShell Logging
