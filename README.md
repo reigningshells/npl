@@ -24,7 +24,7 @@ Usage
  npl.exe -decode {base64_encoded_command}
 ```
 
-Interactive Shell (very rudimentary, but works in a pinch)
+Interactive Shell
 ```
  C:\Users\reigningshells>npl.exe -shell
  PS C:\Users\reigningshells> ($PSVersionTable).PSVersion.Major

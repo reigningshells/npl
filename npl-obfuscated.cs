@@ -174,11 +174,13 @@ namespace npl
                         PSObject output = ps.Invoke()[0];
                         string[] names = Array.FindAll(output.ToString().Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None), x => x.StartsWith(currentParam));
 
-                        // Get matching files in current directory
+                        // Get matching directories/files in current directory
                         var data = Directory.EnumerateFileSystemEntries(pwd, "*").Select(Path.GetFileName);
                         var matches = data.Where(item => item != currentParam && item.StartsWith(currentParam, true, CultureInfo.InvariantCulture));
 
+                        // Combine lists of cmdlets and directories/files 
                         matches = names.Concat(matches);
+
                         if (matches != null && matches.Any())
                         {
                             if (matches.Count() == 1)
@@ -200,22 +202,21 @@ namespace npl
                             continue;
                         }
 
-                        ClearCurrentLine(prompt);
-                        builder.Clear();
-
                         string currentCmd = string.Join(" ", currentParams, 0, currentParams.Length);
 
-                        Console.Write(currentCmd);
+                        builder.Clear();
                         builder.Append(currentCmd);
+
+                        ClearCurrentLine(prompt);
+                        Console.Write(currentCmd);
+
                         break;
                     case ConsoleKey.Backspace:
                         if (currentInput.Length > 0)
                         {
                             builder.Remove(builder.Length - 1, 1);
                             ClearCurrentLine(prompt);
-
-                            currentInput = currentInput.Any() ? currentInput.Remove(currentInput.Length - 1, 1) : string.Empty;
-                            Console.Write(currentInput);
+                            Console.Write(builder.ToString());
                         }
                         else
                         {
@@ -230,20 +231,20 @@ namespace npl
                         if (historyPointer > 0)
                         {
                             historyPointer -= 1;
-                            currentInput = history[historyPointer];
                             builder.Clear();
-                            builder.Append(currentInput);
-                            ClearCurrentLine(prompt + currentInput);
+                            builder.Append(history[historyPointer]);
+                            ClearCurrentLine(prompt);
+                            Console.Write(builder.ToString());
                         }
                         break;
                     case ConsoleKey.DownArrow:
                         if (historyPointer < history.Count() - 1)
                         {
                             historyPointer += 1;
-                            currentInput = history[historyPointer];
                             builder.Clear();
-                            builder.Append(currentInput);
-                            ClearCurrentLine(prompt + currentInput);
+                            builder.Append(history[historyPointer]);
+                            ClearCurrentLine(prompt);
+                            Console.Write(builder.ToString());
                         }
                         break;
                     default:
