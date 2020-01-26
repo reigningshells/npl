@@ -95,13 +95,15 @@ namespace npl
                 }
                 else if (args[0].ToLower() == "-shell")
                 {
+                    List<string> history = new List<string>();
+
                     while (true)
                     {
                         ps.AddScript("pwd");
                         string pwd = ps.Invoke()[0].ToString();
                         string prompt = "PS " + pwd + "> ";
 
-                        string input = TabableReadLine(ps, prompt, pwd);
+                        string input = TabableReadLine(ps, prompt, pwd, history);
 
                         if (string.IsNullOrEmpty(input))
                         {
@@ -112,6 +114,8 @@ namespace npl
                         {
                             break;
                         }
+
+                        history.Add(input);
 
                         Invoke(ps, input);
                         ps.Commands.Clear();
@@ -146,9 +150,11 @@ namespace npl
             }
         }
  
-        private static string TabableReadLine(PowerShell ps, string prompt, string pwd)
+        private static string TabableReadLine(PowerShell ps, string prompt, string pwd, List<string> history)
         {
+            int historyPointer = history.Count();
             Console.Write(prompt);
+
             var builder = new StringBuilder();
             var input = Console.ReadKey(intercept: true);
 
@@ -219,6 +225,26 @@ namespace npl
                     case ConsoleKey.LeftArrow:
                         builder.Remove(builder.Length - 1, 1);
                         Console.SetCursorPosition(prompt.Length + currentInput.Length - 1, Console.CursorTop);
+                        break;
+                    case ConsoleKey.UpArrow:
+                        if (historyPointer > 0)
+                        {
+                            historyPointer -= 1;
+                            currentInput = history[historyPointer];
+                            builder.Clear();
+                            builder.Append(currentInput);
+                            ClearCurrentLine(prompt + currentInput);
+                        }
+                        break;
+                    case ConsoleKey.DownArrow:
+                        if (historyPointer < history.Count() - 1)
+                        {
+                            historyPointer += 1;
+                            currentInput = history[historyPointer];
+                            builder.Clear();
+                            builder.Append(currentInput);
+                            ClearCurrentLine(prompt + currentInput);
+                        }
                         break;
                     default:
                         var key = input.KeyChar;

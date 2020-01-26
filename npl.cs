@@ -20,9 +20,7 @@ This is not intended to be used as is on anything other than a simple one-off
 penetration test.  For a real, long term, engagement only the necessary functionality
 should be extracted from this and weaponized.
 
-This npl.cs with simple obfuscation of strings to bypass Defender's checks for AMSI and
-PowerShell logging bypasses.  It seriously only takes base64 encoding the strings but,
-without it, will trigger an alert at compile time or when npl.exe is dropped to disk.
+Using as is, without any sort of obfuscation, will trigger most AVs.
 
 How to compile:
 ===============
@@ -91,13 +89,15 @@ namespace npl
                 }
                 else if (args[0].ToLower() == "-shell")
                 {
+                    List<string> history = new List<string>();
+
                     while (true)
                     {
                         ps.AddScript("pwd");
                         string pwd = ps.Invoke()[0].ToString();
                         string prompt = "PS " + pwd + "> ";
 
-                        string input = TabableReadLine(ps, prompt, pwd);
+                        string input = TabableReadLine(ps, prompt, pwd, history);
 
                         if (string.IsNullOrEmpty(input))
                         {
@@ -108,6 +108,8 @@ namespace npl
                         {
                             break;
                         }
+
+                        history.Add(input);
 
                         Invoke(ps, input);
                         ps.Commands.Clear();
@@ -141,10 +143,12 @@ namespace npl
                 Console.WriteLine("\r\nusage:\r\nnpl.exe -shell\r\nnpl.exe \"{powershell single command}\"\r\nnpl.exe \"& {commands; semi-colon; separated}\"\r\nnpl.exe -encodedcommand {base64_encoded_command}\r\nnpl.exe -encode \"commands to encode to base64\"\r\nnpl.exe -decode {base64_encoded_command}");
             }
         }
- 
-        private static string TabableReadLine(PowerShell ps, string prompt, string pwd)
+
+        private static string TabableReadLine(PowerShell ps, string prompt, string pwd, List<string> history)
         {
+            int historyPointer = history.Count();
             Console.Write(prompt);
+
             var builder = new StringBuilder();
             var input = Console.ReadKey(intercept: true);
 
@@ -155,7 +159,7 @@ namespace npl
                 switch (input.Key)
                 {
                     case ConsoleKey.Tab:
-                      
+
                         var currentParams = currentInput.Split(' ');
                         string currentParam = currentParams[currentParams.Length - 1];
 
@@ -216,6 +220,26 @@ namespace npl
                         builder.Remove(builder.Length - 1, 1);
                         Console.SetCursorPosition(prompt.Length + currentInput.Length - 1, Console.CursorTop);
                         break;
+                    case ConsoleKey.UpArrow:
+                        if (historyPointer > 0)
+                        {
+                            historyPointer -= 1;
+                            currentInput = history[historyPointer];
+                            builder.Clear();
+                            builder.Append(currentInput);
+                            ClearCurrentLine(prompt + currentInput);
+                        }
+                        break;
+                    case ConsoleKey.DownArrow:
+                        if (historyPointer < history.Count() - 1)
+                        {
+                            historyPointer += 1;
+                            currentInput = history[historyPointer];
+                            builder.Clear();
+                            builder.Append(currentInput);
+                            ClearCurrentLine(prompt + currentInput);
+                        }
+                        break;
                     default:
                         var key = input.KeyChar;
                         builder.Append(key);
@@ -255,7 +279,7 @@ namespace npl
                 string[] lines = output[0].ToString().Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
                 foreach (string line in lines)
                 {
-                        Console.WriteLine(line.TrimEnd());
+                    Console.WriteLine(line.TrimEnd());
                 }
             }
         }
