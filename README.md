@@ -27,9 +27,12 @@ Usage
 Interactive Shell
 ```
  C:\Users\reigningshells>npl.exe -shell
- PS C:\Users\reigningshells> ($PSVersionTable).PSVersion.Major
- 
- 5
+ PS C:\Users\reigningshells> Get-Process -name winlogon
+
+Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName
+-------  ------    -----      -----     ------     --  -- -----------
+    268      12     2488       4964               716   1 winlogon
+    
 ```
 
 Single Commands
