@@ -218,8 +218,13 @@ namespace npl
                         }
                         break;
                     case ConsoleKey.LeftArrow:
-                        builder.Remove(builder.Length - 1, 1);
-                        Console.SetCursorPosition(prompt.Length + currentInput.Length - 1, Console.CursorTop);
+                        if(builder.Length > 0)
+                        {
+                            builder.Remove(builder.Length - 1, 1);
+                            Console.SetCursorPosition(prompt.Length + currentInput.Length - 1, Console.CursorTop);
+                            ClearCurrentLine(prompt);
+                            Console.Write(builder.ToString());
+                        }
                         break;
                     case ConsoleKey.UpArrow:
                         if (historyPointer > 0)
